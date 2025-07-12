@@ -1,10 +1,9 @@
 import { Server } from "http";
 import mongoose from "mongoose";
 import app from "./app";
-import { promise } from "zod";
 
 let server: Server;
-
+ 
 const startServer = async () => {
   try {
     await mongoose.connect(
