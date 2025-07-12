@@ -1,19 +1,18 @@
 import { Server } from "http";
 import mongoose from "mongoose";
 import app from "./app";
+import { envVariables } from "./app/config/env";
 
 let server: Server;
- 
+
 const startServer = async () => {
   try {
-    await mongoose.connect(
-      "mongodb+srv://noteapp:3rqKXiiHdOZklfir@cluster0.4nvaj.mongodb.net/ph-tour-management?retryWrites=true&w=majority&appName=Cluster0"
-    );
+    await mongoose.connect(envVariables.DB_URL);
 
     console.log("Connected to db");
 
-    server = app.listen(5000, () => {
-      console.log("server is running on port 5000");
+    server = app.listen(envVariables.PORT, () => {
+      console.log(`server is running on port ${envVariables.PORT} `);
     });
   } catch (error) {
     console.log(error);
@@ -60,7 +59,6 @@ process.on("SIGTERM", () => {
     process.exit(1);
   }
 });
-
 
 //extra for ourself , when we need to  shoutdown the server manually
 process.on("SIGINT", () => {
