@@ -4,6 +4,7 @@ import { Router } from "express";
 const userRoute = Router();
 
 userRoute.post("/register", UserController.createUser);
+userRoute.get("/", UserController.getAllUser);
 
 export default userRoute;
 
