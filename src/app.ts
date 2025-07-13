@@ -2,6 +2,8 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import { router } from "./app/routes";
 
+import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";
+
 const app = express();
 
 //middlewares
@@ -15,5 +17,8 @@ app.get("/", (req: Request, res: Response) => {
     message: "Welcome to PH Tour Management Backend",
   });
 });
+
+//Global error handling middleware
+app.use(globalErrorHandler);
 
 export default app;

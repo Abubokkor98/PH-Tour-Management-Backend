@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import { userServices } from "./user.service";
 
-const createUser = async (req: Request, res: Response) => {
+const createUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     //call userService
     const user = await userServices.createUser(req.body);
@@ -13,9 +13,10 @@ const createUser = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error(error);
-    res.status(httpStatus.BAD_REQUEST).json({
-      message: `Something went wrong! ${error.message}`,
-    });
+    // res.status(httpStatus.BAD_REQUEST).json({
+    //   message: `Something went wrong! ${error.message}`,
+    // });
+    next(error);
   }
 };
 
