@@ -6,3 +6,5 @@ const userRoute = Router();
 userRoute.post("/register", UserController.createUser);
 
 export default userRoute;
+
+// route matching -> controller -> service -> model -> DB
