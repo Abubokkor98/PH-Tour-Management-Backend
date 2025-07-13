@@ -23,6 +23,7 @@ export interface IUser {
   email: string;
   password?: string;
   phone?: string;
+  image?:string,
   address?: string;
   isDeleted?: string;
   isActive?: IsActive;
