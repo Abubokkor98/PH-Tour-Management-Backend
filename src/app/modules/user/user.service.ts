@@ -2,6 +2,7 @@ import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
 import { IAuthProvider, IUser } from "./user.interface";
 import { User } from "./user.model";
+import bcryptjs from "bcryptjs";
 
 //IUser er sob data amra pathabona, tai Partial use kora
 // const createUser = async (payload: Partial<IUser>) => {
@@ -16,13 +17,16 @@ import { User } from "./user.model";
 //   return user;
 // };
 const createUser = async (payload: Partial<IUser>) => {
-  const { email, ...rest } = payload;
+  const { email, password, ...rest } = payload;
 
   const isUserExist = await User.findOne({ email });
 
   if (isUserExist) {
     throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist");
   }
+
+  //encrypt password
+  const hashedPassword = await bcryptjs.hash(password as string, 8);
 
   const authProviders: IAuthProvider = {
     provider: "credentials",
@@ -31,6 +35,7 @@ const createUser = async (payload: Partial<IUser>) => {
 
   const user = await User.create({
     email,
+    password: hashedPassword,
     auths: [authProviders],
     ...rest,
   });
