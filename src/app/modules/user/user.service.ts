@@ -1,13 +1,38 @@
-import { IUser } from "./user.interface";
+import httpStatus from "http-status-codes";
+import AppError from "../../errorHelpers/AppError";
+import { IAuthProvider, IUser } from "./user.interface";
 import { User } from "./user.model";
 
 //IUser er sob data amra pathabona, tai Partial use kora
+// const createUser = async (payload: Partial<IUser>) => {
+//   const { name, email, password } = payload;
+
+//   const user = await User.create({
+//     name,
+//     email,
+//     password,
+//   });
+
+//   return user;
+// };
 const createUser = async (payload: Partial<IUser>) => {
-  const { name, email } = payload;
+  const { email, ...rest } = payload;
+
+  const isUserExist = await User.findOne({ email });
+
+  if (isUserExist) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist");
+  }
+
+  const authProviders: IAuthProvider = {
+    provider: "credentials",
+    providerId: email as string,
+  };
 
   const user = await User.create({
-    name,
     email,
+    auths: [authProviders],
+    ...rest,
   });
 
   return user;
