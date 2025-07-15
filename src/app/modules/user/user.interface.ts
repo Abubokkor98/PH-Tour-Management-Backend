@@ -8,7 +8,7 @@ export enum Role {
 }
 
 export interface IAuthProvider {
-  provider: string; //"google", "facebook", "email+password"
+  provider: "google" | "credentials"; //"google", "facebook", "email+password"
   providerId: string;
 }
 
@@ -23,11 +23,11 @@ export interface IUser {
   email: string;
   password?: string;
   phone?: string;
-  image?:string,
+  image?: string;
   address?: string;
   isDeleted?: string;
   isActive?: IsActive;
-  isVarified?: string;
+  isVerified?: boolean;
   role: Role;
   auths: IAuthProvider[];
   bookings?: Types.ObjectId[];
