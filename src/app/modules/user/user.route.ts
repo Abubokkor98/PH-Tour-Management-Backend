@@ -2,11 +2,13 @@ import { validateRequest } from "../../middlewares/validateRequest";
 import { UserController } from "./user.controller";
 import { Router } from "express";
 import { createUserZodSchema } from "./user.validation";
+import { checkAuth } from "../../middlewares/checkAuth";
+import { Role } from "./user.interface";
 
 const userRoute = Router();
 
 userRoute.post("/register",validateRequest(createUserZodSchema),UserController.createUser);
-userRoute.get("/", UserController.getAllUser);
+userRoute.get("/",checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserController.getAllUser);
 
 export default userRoute;
 

@@ -3,6 +3,7 @@ import AppError from "../../errorHelpers/AppError";
 import { IAuthProvider, IUser } from "./user.interface";
 import { User } from "./user.model";
 import bcryptjs from "bcryptjs";
+import { envVariables } from "../../config/env";
 
 //IUser er sob data amra pathabona, tai Partial use kora
 // const createUser = async (payload: Partial<IUser>) => {
@@ -26,7 +27,7 @@ const createUser = async (payload: Partial<IUser>) => {
   }
 
   //encrypt password
-  const hashedPassword = await bcryptjs.hash(password as string, 8);
+  const hashedPassword = await bcryptjs.hash(password as string, Number(envVariables.BCRYPT_SALT_ROUND));
 
   const authProviders: IAuthProvider = {
     provider: "credentials",

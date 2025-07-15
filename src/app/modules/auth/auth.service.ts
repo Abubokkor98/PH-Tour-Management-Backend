@@ -30,7 +30,7 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
     role: isUserExist.role,
   };
 
-  const accessToken = jwt.sign(jwtPayload, "sfwtwt", {
+  const accessToken = jwt.sign(jwtPayload, "secret", {
     expiresIn: "1h",
   });
 
