@@ -7,6 +7,8 @@ import {
   createNewAccessTokenWithRefreshToken,
   createUserToken,
 } from "../../utils/userToken";
+import { JwtPayload } from "jsonwebtoken";
+import { envVariables } from "../../config/env";
 
 const credentialsLogin = async (payload: Partial<IUser>) => {
   const { email, password } = payload;
@@ -70,9 +72,39 @@ const getNewAccessToken = async (refreshToken: string) => {
   };
 };
 
+const newPassword = async (
+  oldPassword: string,
+  newPassword: string,
+  decodedToken: JwtPayload
+) => {
+  const user = await User.findById(decodedToken.userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const isOldPasswordMatch = await bcryptjs.compare(
+    oldPassword,
+    user?.password as string
+  );
+
+  if (!isOldPasswordMatch) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Old Password doesn't match");
+  }
+
+  //save new password to the user
+  user.password = await bcryptjs.hash(
+    newPassword,
+    Number(envVariables.BCRYPT_SALT_ROUND)
+  );
+  //save the updated user
+  await user.save();
+};
+
 //user - login - token (email, role, _id) - booking / payment / booking / payment cancel - token
 
 export const AuthServices = {
   credentialsLogin,
   getNewAccessToken,
+  newPassword,
 };
