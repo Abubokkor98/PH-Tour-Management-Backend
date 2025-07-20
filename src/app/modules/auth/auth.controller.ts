@@ -4,11 +4,23 @@ import httpStatus from "http-status-codes";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { AuthServices } from "./auth.service";
+import AppError from "../../errorHelpers/AppError";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const credentialsLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const loginInfo = await AuthServices.credentialsLogin(req.body);
+
+    //set refreshToken to the cookies
+    res.cookie("refreshToken", loginInfo.refreshToken, {
+      httpOnly: true,
+      secure: false,
+    });
+    //set accessToken to the cookies
+    res.cookie("accessToken", loginInfo.accessToken, {
+      httpOnly: true,
+      secure: false,
+    });
 
     sendResponse(res, {
       success: true,
@@ -20,9 +32,15 @@ const credentialsLogin = catchAsync(
 );
 const getNewAccessToken = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    // const refreshToken = req.cookies.refreshToken
-    const refreshToken = req.headers.authorization
-    const tokenInfo = await AuthServices.getNewAccessToken(refreshToken as string)
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "No referesh token received from cookies"
+      );
+    }
+    const tokenInfo = await AuthServices.getNewAccessToken(refreshToken);
 
     sendResponse(res, {
       success: true,
@@ -35,5 +53,5 @@ const getNewAccessToken = catchAsync(
 
 export const AuthControllers = {
   credentialsLogin,
-  getNewAccessToken
+  getNewAccessToken,
 };
