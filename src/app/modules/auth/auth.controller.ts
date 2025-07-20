@@ -5,6 +5,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { AuthServices } from "./auth.service";
 import AppError from "../../errorHelpers/AppError";
+import { setAuthCookie } from "../../utils/setCookie";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const credentialsLogin = catchAsync(
@@ -12,15 +13,16 @@ const credentialsLogin = catchAsync(
     const loginInfo = await AuthServices.credentialsLogin(req.body);
 
     //set refreshToken to the cookies
-    res.cookie("refreshToken", loginInfo.refreshToken, {
-      httpOnly: true,
-      secure: false,
-    });
+    // res.cookie("refreshToken", loginInfo.refreshToken, {
+    //   httpOnly: true,
+    //   secure: false,
+    // });
     //set accessToken to the cookies
-    res.cookie("accessToken", loginInfo.accessToken, {
-      httpOnly: true,
-      secure: false,
-    });
+    // res.cookie("accessToken", loginInfo.accessToken, {
+    //   httpOnly: true,
+    //   secure: false,
+    // });
+    setAuthCookie(res, loginInfo);
 
     sendResponse(res, {
       success: true,
@@ -41,6 +43,13 @@ const getNewAccessToken = catchAsync(
       );
     }
     const tokenInfo = await AuthServices.getNewAccessToken(refreshToken);
+
+    //set latest accessToken to the cookies
+    // res.cookie("accessToken", tokenInfo.accessToken, {
+    //   httpOnly: true,
+    //   secure: false,
+    // });
+    setAuthCookie(res, tokenInfo);
 
     sendResponse(res, {
       success: true,
