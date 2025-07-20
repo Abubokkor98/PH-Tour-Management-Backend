@@ -3,7 +3,8 @@ import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
 import { IUser } from "../user/user.interface";
 import { User } from "../user/user.model";
-import jwt from "jsonwebtoken";
+import { generateToken } from "../../utils/jwt";
+import { envVariables } from "../../config/env";
 
 const credentialsLogin = async (payload: Partial<IUser>) => {
   const { email, password } = payload;
@@ -30,13 +31,27 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
     role: isUserExist.role,
   };
 
-  const accessToken = jwt.sign(jwtPayload, "secret", {
-    expiresIn: "1h",
-  });
+  // const accessToken = jwt.sign(jwtPayload, "secret", {
+  //   expiresIn: "1h",
+  // });
+  const accessToken = generateToken(
+    jwtPayload,
+    envVariables.JWT_ACCESS_SECRET,
+    envVariables.JWT_ACCESS_EXPIRES
+  );
+
+  const refreshToken = generateToken(
+    jwtPayload,
+    envVariables.JWT_REFRESH_SECRET,
+    envVariables.JWT_REFRESH_EXPIRES
+  );
+
 
   return {
     // email: isUserExist.email,
     accessToken,
+    refreshToken,
+    user: isUserExist
   };
 };
 
