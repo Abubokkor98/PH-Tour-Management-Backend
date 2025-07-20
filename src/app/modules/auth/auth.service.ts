@@ -1,10 +1,12 @@
 import bcryptjs from "bcryptjs";
 import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
-import { IUser } from "../user/user.interface";
+import { IsActive, IUser } from "../user/user.interface";
 import { User } from "../user/user.model";
-import { generateToken } from "../../utils/jwt";
+import { generateToken, verifyToken } from "../../utils/jwt";
 import { envVariables } from "../../config/env";
+import { createUserToken } from "../../utils/userToken";
+import { JwtPayload } from "jsonwebtoken";
 
 const credentialsLogin = async (payload: Partial<IUser>) => {
   const { email, password } = payload;
@@ -25,33 +27,80 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
   }
 
   //jwt payload
+  // const jwtPayload = {
+  //   userId: isUserExist._id,
+  //   email: isUserExist.email,
+  //   role: isUserExist.role,
+  // };
+
+  // // const accessToken = jwt.sign(jwtPayload, "secret", {
+  // //   expiresIn: "1h",
+  // // });
+  // const accessToken = generateToken(
+  //   jwtPayload,
+  //   envVariables.JWT_ACCESS_SECRET,
+  //   envVariables.JWT_ACCESS_EXPIRES
+  // );
+
+  // const refreshToken = generateToken(
+  //   jwtPayload,
+  //   envVariables.JWT_REFRESH_SECRET,
+  //   envVariables.JWT_REFRESH_EXPIRES
+  // );
+
+  //we are using utils function insted of upper jwt payload
+  const userToken = createUserToken(isUserExist);
+
+  //prevent password field to show the frontend
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _password, ...rest } = isUserExist.toObject();
+
+  return {
+    // email: isUserExist.email,
+    accessToken: userToken.accessToken,
+    refreshToken: userToken.refreshToken,
+    user: rest,
+  };
+};
+const getNewAccessToken = async (refreshToken: string) => {
+  const verifiedRefreshToken = verifyToken(
+    refreshToken,
+    envVariables.JWT_REFRESH_SECRET
+  ) as JwtPayload;
+
+  const isUserExist = await User.findOne({ email: verifiedRefreshToken.email });
+
+  if (!isUserExist) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
+  }
+  if (
+    isUserExist.isActive === IsActive.BLOCKED ||
+    isUserExist.isActive === IsActive.INACTIVE
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `User is ${isUserExist.isActive}`
+    );
+  }
+  if (isUserExist.isDeleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
+  }
+
+  //jwt payload
   const jwtPayload = {
     userId: isUserExist._id,
     email: isUserExist.email,
     role: isUserExist.role,
   };
 
-  // const accessToken = jwt.sign(jwtPayload, "secret", {
-  //   expiresIn: "1h",
-  // });
   const accessToken = generateToken(
     jwtPayload,
     envVariables.JWT_ACCESS_SECRET,
     envVariables.JWT_ACCESS_EXPIRES
   );
 
-  const refreshToken = generateToken(
-    jwtPayload,
-    envVariables.JWT_REFRESH_SECRET,
-    envVariables.JWT_REFRESH_EXPIRES
-  );
-
-
   return {
-    // email: isUserExist.email,
     accessToken,
-    refreshToken,
-    user: isUserExist
   };
 };
 
@@ -59,4 +108,5 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
 
 export const AuthServices = {
   credentialsLogin,
+  getNewAccessToken,
 };
