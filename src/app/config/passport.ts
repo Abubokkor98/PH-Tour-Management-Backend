@@ -13,19 +13,33 @@ import { Strategy as LocalStrategy } from "passport-local";
 passport.use(
   new LocalStrategy(
     {
-      usernameField: "email",
-      passwordField: "password",
+      usernameField: "email",   // Use "email" instead of default "username"
+      passwordField: "password" // Explicitly set password field
     },
-    async (email: string, password: string, done: VerifyCallback) => {
+    async (email: string, password: string, done) => {
       try {
+        // Find user by email
         const isUserExist = await User.findOne({ email });
 
         if (!isUserExist) {
           return done(null, false, { message: "User Doesn't Exist" });
         }
 
+        // If user registered with Google, prevent login with credentials
+        const isGoogleAuthenticated = isUserExist.auths.some(
+          (providerObjects) => providerObjects.provider === "google"
+        );
+
+        if (isGoogleAuthenticated) {
+          return done(null, false, {
+            message:
+              "You signed up using Google. To use credentials login, first log in with Google and set a password.",
+          });
+        }
+
+        // Compare entered password with hashed password
         const isPasswordMatched = await bcryptjs.compare(
-          password as string,
+          password,
           isUserExist.password as string
         );
 
@@ -33,6 +47,7 @@ passport.use(
           return done(null, false, { message: "Password Doesn't Match" });
         }
 
+        // All good, return the user
         return done(null, isUserExist);
       } catch (error) {
         console.log(error);
@@ -41,6 +56,7 @@ passport.use(
     }
   )
 );
+
 
 // Configure the Google OAuth strategy for Passport
 passport.use(
