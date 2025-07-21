@@ -1,3 +1,5 @@
+import bcryptjs from "bcryptjs";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import passport from "passport";
 import {
   Strategy as GoogleStrategy,
@@ -6,6 +8,39 @@ import {
 } from "passport-google-oauth20";
 import { envVariables } from "./env";
 import { User } from "../modules/user/user.model";
+import { Strategy as LocalStrategy } from "passport-local";
+
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "email",
+      passwordField: "password",
+    },
+    async (email: string, password: string, done: VerifyCallback) => {
+      try {
+        const isUserExist = await User.findOne({ email });
+
+        if (!isUserExist) {
+          return done(null, false, { message: "User Doesn't Exist" });
+        }
+
+        const isPasswordMatched = await bcryptjs.compare(
+          password as string,
+          isUserExist.password as string
+        );
+
+        if (!isPasswordMatched) {
+          return done(null, false, { message: "Password Doesn't Match" });
+        }
+
+        return done(null, isUserExist);
+      } catch (error) {
+        console.log(error);
+        done(error);
+      }
+    }
+  )
+);
 
 // Configure the Google OAuth strategy for Passport
 passport.use(
@@ -63,7 +98,6 @@ passport.use(
 // Bridge == Google -> user db store -> token
 //Custom -> email , password, role : USER, name... -> registration -> DB -> 1 User create
 //Google -> req -> google -> successful : Jwt Token : Role , email -> DB - Store -> token - api access
-
 
 // Tells Passport what data to save in the session (user._id in this case)
 passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
