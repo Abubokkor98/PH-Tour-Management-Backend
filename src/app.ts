@@ -9,13 +9,14 @@ import passport from "passport";
 // Import Google strategy and passport session setup
 // This is required to register the 'google' strategy and enable serialize/deserialize logic before any route uses passport.authenticate('google')
 import "./app/config/passport";
+import { envVariables } from "./app/config/env";
 
 const app = express();
 
 //middlewares
 app.use(
   expressSession({
-    secret: "your secret",
+    secret: envVariables.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
   })
