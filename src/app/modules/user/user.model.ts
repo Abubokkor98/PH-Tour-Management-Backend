@@ -38,8 +38,8 @@ const userSchema = new Schema<IUser>(
     phone: { type: String },
     image: { type: String },
     address: { type: String },
-    isDeleted: { type: String, default: false },
-    isVarified: { type: String, default: false },
+    isDeleted: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false },
     isActive: {
       type: String,
       enum: Object.values(IsActive),

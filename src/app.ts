@@ -1,15 +1,31 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { router } from "./app/routes";
-
 import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";
 import { NotFound } from "./app/middlewares/notFound";
+import cookieParser from "cookie-parser";
+import expressSession from "express-session";
+import passport from "passport";
+// Import Google strategy and passport session setup
+// This is required to register the 'google' strategy and enable serialize/deserialize logic before any route uses passport.authenticate('google')
+import "./app/config/passport";
+import { envVariables } from "./app/config/env";
 
 const app = express();
 
 //middlewares
+app.use(
+  expressSession({
+    secret: envVariables.EXPRESS_SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.json());
 app.use(cors());
+app.use(cookieParser());
 
 app.use("/api/v1", router);
 
