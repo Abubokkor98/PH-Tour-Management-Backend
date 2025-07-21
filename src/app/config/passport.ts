@@ -13,8 +13,8 @@ import { Strategy as LocalStrategy } from "passport-local";
 passport.use(
   new LocalStrategy(
     {
-      usernameField: "email",   // Use "email" instead of default "username"
-      passwordField: "password" // Explicitly set password field
+      usernameField: "email", // Use "email" instead of default "username"
+      passwordField: "password", // Explicitly set password field
     },
     async (email: string, password: string, done) => {
       try {
@@ -24,6 +24,13 @@ passport.use(
         if (!isUserExist) {
           return done(null, false, { message: "User Doesn't Exist" });
         }
+
+        /**
+         * * if (!isUserExist) {
+         ** return done("User Doesn't Exist");
+         **}
+         ** we can also use like this (module 29.3, 14:50 second)******
+         */
 
         // If user registered with Google, prevent login with credentials
         const isGoogleAuthenticated = isUserExist.auths.some(
@@ -56,7 +63,6 @@ passport.use(
     }
   )
 );
-
 
 // Configure the Google OAuth strategy for Passport
 passport.use(

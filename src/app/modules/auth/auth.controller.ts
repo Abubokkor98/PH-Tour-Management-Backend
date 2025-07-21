@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
@@ -9,11 +10,47 @@ import { setAuthCookie } from "../../utils/setCookie";
 import { JwtPayload } from "jsonwebtoken";
 import { createUserToken } from "../../utils/userToken";
 import { envVariables } from "../../config/env";
+import passport from "passport";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const credentialsLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const loginInfo = await AuthServices.credentialsLogin(req.body);
+    // const loginInfo = await AuthServices.credentialsLogin(req.body); //module 29.3
+
+    // Authenticate user using Passport's 'local' strategy
+    passport.authenticate("local", async (error: any, user: any, info: any) => {
+      // If there's an internal error during authentication, pass it to error handler
+      if (error) {
+        return next(error);
+      }
+
+      // If user is not found or credentials are invalid
+      if (!user) {
+        return new AppError(httpStatus.NOT_FOUND, info.message);
+      }
+
+      // If user is valid, generate access and refresh tokens
+
+      const userTokens = await createUserToken(user);
+
+      // Exclude password field from the user object before sending to client
+      const { password: _password, ...rest } = user.toObject();
+
+      // Set tokens (access & refresh) in cookies for secure storage
+      setAuthCookie(res, userTokens);
+
+      // Send a successful login response to the client
+      sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "User Logged In Successfully",
+        data: {
+          accessToken: userTokens.accessToken,
+          refreshToken: userTokens.refreshToken,
+          user: rest,
+        },
+      });
+    })(req, res, next); // Immediately invoke the middleware function with req, res, next
 
     //set refreshToken to the cookies
     // res.cookie("refreshToken", loginInfo.refreshToken, {
@@ -25,14 +62,14 @@ const credentialsLogin = catchAsync(
     //   httpOnly: true,
     //   secure: false,
     // });
-    setAuthCookie(res, loginInfo);
+    // setAuthCookie(res, loginInfo); //module 29.3
 
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "User Logged In Successfully",
-      data: loginInfo,
-    });
+    // sendResponse(res, { //module 29.3
+    //   success: true,
+    //   statusCode: httpStatus.OK,
+    //   message: "User Logged In Successfully",
+    //   data: loginInfo,
+    // });
   }
 );
 const getNewAccessToken = catchAsync(
