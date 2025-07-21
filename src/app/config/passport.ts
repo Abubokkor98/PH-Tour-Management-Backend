@@ -37,11 +37,18 @@ passport.use(
           (providerObjects) => providerObjects.provider === "google"
         );
 
-        if (isGoogleAuthenticated) {
-          return done(null, false, {
-            message:
-              "You signed up using Google. To use credentials login, first log in with Google and set a password.",
-          });
+        // if (isGoogleAuthenticated) {
+        //   return done(null, false, {
+        //     message:
+        //       "You signed up using Google. To use credentials login, first log in with Google and set a password.",
+        //   });
+        // }
+
+        //method 2
+        if (isGoogleAuthenticated && !isUserExist.password) {
+          return done(
+            "You signed up using Google. To use credentials login, first log in with Google and set a password."
+          );
         }
 
         // Compare entered password with hashed password

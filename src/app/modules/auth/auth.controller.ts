@@ -21,12 +21,20 @@ const credentialsLogin = catchAsync(
     passport.authenticate("local", async (error: any, user: any, info: any) => {
       // If there's an internal error during authentication, pass it to error handler
       if (error) {
-        return next(error);
+        // ❌❌❌❌❌
+        // throw new AppError(401, "Some error")
+        // next(err)
+        // return new AppError(401, err)
+
+        // ✅✅✅✅
+        // return next(err)
+        // console.log("from err");
+        return next(new AppError(401, error));
       }
 
       // If user is not found or credentials are invalid
       if (!user) {
-        return new AppError(httpStatus.NOT_FOUND, info.message);
+        return next(new AppError(401, info.message));
       }
 
       // If user is valid, generate access and refresh tokens
