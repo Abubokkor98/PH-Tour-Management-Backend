@@ -6,6 +6,9 @@ import { NotFound } from "./app/middlewares/notFound";
 import cookieParser from "cookie-parser";
 import expressSession from "express-session";
 import passport from "passport";
+// Import Google strategy and passport session setup
+// This is required to register the 'google' strategy and enable serialize/deserialize logic before any route uses passport.authenticate('google')
+import "./app/config/passport";
 
 const app = express();
 

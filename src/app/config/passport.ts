@@ -57,3 +57,26 @@ passport.use(
     }
   )
 );
+
+// frontend localhost:5173/login?redirect=/booking -> localhost:5000/api/v1/auth/google?redirect=/booking -> passport -> Google OAuth Consent -> gmail login -> successful -> callback url localhost:5000/api/v1/auth/google/callback -> db store -> token
+
+// Bridge == Google -> user db store -> token
+//Custom -> email , password, role : USER, name... -> registration -> DB -> 1 User create
+//Google -> req -> google -> successful : Jwt Token : Role , email -> DB - Store -> token - api access
+
+
+// Tells Passport what data to save in the session (user._id in this case)
+passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
+  done(null, user._id); // Only storing user ID in session
+});
+
+// Tells Passport how to retrieve the full user data from the session on each request
+passport.deserializeUser(async (id: string, done: any) => {
+  try {
+    const user = await User.findById(id); // Fetch full user by ID
+    done(null, user); // Attach full user to req.user
+  } catch (error) {
+    console.log(error);
+    done(error); // If error occurs, authentication fails
+  }
+});

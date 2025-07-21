@@ -6,6 +6,9 @@ import { sendResponse } from "../../utils/sendResponse";
 import { AuthServices } from "./auth.service";
 import AppError from "../../errorHelpers/AppError";
 import { setAuthCookie } from "../../utils/setCookie";
+import { JwtPayload } from "jsonwebtoken";
+import { createUserToken } from "../../utils/userToken";
+import { envVariables } from "../../config/env";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const credentialsLogin = catchAsync(
@@ -87,7 +90,11 @@ const resetPassword = catchAsync(
     const decodedToken = req.user; // Extract decoded user info (from middleware-authenticated token)
 
     // Call service to update the user's password
-    await AuthServices.newPassword(oldPassword, newPassword, decodedToken);
+    await AuthServices.newPassword(
+      oldPassword,
+      newPassword,
+      decodedToken as JwtPayload
+    );
 
     sendResponse(res, {
       success: true,
@@ -98,9 +105,24 @@ const resetPassword = catchAsync(
   }
 );
 
+const googleCallbackController = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    console.log("user from google", user);
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+    }
+    const tokenInfo = createUserToken(user);
+    setAuthCookie(res, tokenInfo);
+
+    res.redirect(envVariables.FRONTEND_URL);
+  }
+);
+
 export const AuthControllers = {
   credentialsLogin,
   getNewAccessToken,
   logout,
   resetPassword,
+  googleCallbackController,
 };
