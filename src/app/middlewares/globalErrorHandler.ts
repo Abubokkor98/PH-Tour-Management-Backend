@@ -1,49 +1,100 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextFunction, Request, Response } from "express";
-import { envVariables } from "../config/env";
+import { Request, Response, NextFunction } from "express";
 import AppError from "../errorHelpers/AppError";
+import { handleCastError } from "../helpers/handleCastError";
 
+import { handlerValidationError } from "../helpers/handlerValidationError";
+import { handlerZodError } from "../helpers/handlerZodError";
+import { TErrorSources } from "../interfaces/error.types";
+import { envVariables } from "../config/env"; // Load environment variables
+import { handlerDuplicateError } from "../helpers/handleDuplicateError";
+
+// This middleware will catch all errors thrown in the app
 export const globalErrorHandler = (
-  error: any,
+  err: any,
   req: Request,
   res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ) => {
+  // Show full error and stack trace only in development mode
+  if (envVariables.NODE_ENV === "development") {
+    console.log("💥 Global Error Handler:", err);
+  }
+
+  // Default fallback values
   let statusCode = 500;
   let message = "Something went wrong!";
+  let errorSources: TErrorSources[] = [];
 
-  //Duplicate error
-  if (error.code == 11000) {
-    const matchedArray = error.message.match(/"([^"]+)"/);
-    console.log(matchedArray);
-    statusCode = 400;
-    message = `${matchedArray[1]} already exist`;
-  }
-  //ObjectId/ Cast error
-  else if (error.name === "CastError") {
-    statusCode = 400;
-    message = `Invalid ObjectId, please provide a valid ID`;
-  }
-  //Validation Error (type mismatch, required fields, etc.) //* will have to validate mutiple wrong field as well*/
-  else if (error.name === "ValidationError") {
-    statusCode = 400;
-    const errorDetails = Object.values(error.errors).map((err: any) => {
-      return `Field "${err.path}" - ${err.message}`;
-    });
-    message = `Validation failed: ${errorDetails.join("; ")}`;
-  } else if (error instanceof AppError) {
-    statusCode = error.statusCode;
-    message = error.message;
-  } else if (error instanceof Error) {
-    statusCode = 500;
-    message = error.message;
+  // ==============================
+  //  Handle AppError (custom error class)
+  // ==============================
+  if (err instanceof AppError) {
+    statusCode = err.statusCode;
+    message = err.message;
   }
 
+  // ==============================
+  // Handle MongoDB Duplicate Key Error (e.g., email already exists)
+  // ==============================
+  else if (err?.code === 11000) {
+    const simplified = handlerDuplicateError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorSources = simplified.errorSources ?? [];
+  }
+
+  // ==============================
+  // Handle Mongoose Validation Error (e.g., required field missing)
+  // ==============================
+  else if (err?.name === "ValidationError") {
+    const simplified = handlerValidationError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorSources = simplified.errorSources ?? [];
+  }
+  /**
+   *
+   */
+  // ==============================
+  //  Handle Mongoose Cast Error (e.g., invalid ObjectId format)
+  // ==============================
+  else if (err?.name === "CastError") {
+    const simplified = handleCastError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorSources = simplified.errorSources ?? [];
+  }
+
+  // ==============================
+  //  Handle Zod Validation Error (for request body/params)
+  // ==============================
+  else if (err?.name === "ZodError") {
+    const simplified = handlerZodError(err);
+    statusCode = simplified.statusCode;
+    message = simplified.message;
+    errorSources = simplified.errorSources ?? [];
+  }
+
+  // ==============================
+  //  Handle native JS Error object as fallback
+  // ==============================
+  else if (err instanceof Error) {
+    message = err.message;
+  }
+
+  // ==============================
+  //  Final Error Response
+  // ==============================
   res.status(statusCode).json({
     success: false,
-    message: message,
-    error,
-    stack: envVariables.NODE_ENV === "development" ? error.stack : null,
+    message, // General error message
+    errorSources, // List of specific field errors (if any)
+    // Only show stack trace and full error object in development
+    ...(envVariables.NODE_ENV === "development" && {
+      err,
+      stack: err.stack,
+    }),
   });
 };
