@@ -92,9 +92,7 @@ export const globalErrorHandler = (
     message, // General error message
     errorSources, // List of specific field errors (if any)
     // Only show stack trace and full error object in development
-    ...(envVariables.NODE_ENV === "development" && {
-      err,
-      stack: err.stack,
-    }),
+    err: envVariables.NODE_ENV === "development" ? err : null,
+    stack: envVariables.NODE_ENV === "development" ? err.stack : null,
   });
 };
