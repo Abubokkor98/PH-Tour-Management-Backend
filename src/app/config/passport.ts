@@ -1,3 +1,5 @@
+import bcryptjs from "bcryptjs";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import passport from "passport";
 import {
   Strategy as GoogleStrategy,
@@ -6,6 +8,68 @@ import {
 } from "passport-google-oauth20";
 import { envVariables } from "./env";
 import { User } from "../modules/user/user.model";
+import { Strategy as LocalStrategy } from "passport-local";
+
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: "email", // Use "email" instead of default "username"
+      passwordField: "password", // Explicitly set password field
+    },
+    async (email: string, password: string, done) => {
+      try {
+        // Find user by email
+        const isUserExist = await User.findOne({ email });
+
+        if (!isUserExist) {
+          return done(null, false, { message: "User Doesn't Exist" });
+        }
+
+        /**
+         * * if (!isUserExist) {
+         ** return done("User Doesn't Exist");
+         **}
+         ** we can also use like this (module 29.3, 14:50 second)******
+         */
+
+        // If user registered with Google, prevent login with credentials
+        const isGoogleAuthenticated = isUserExist.auths.some(
+          (providerObjects) => providerObjects.provider === "google"
+        );
+
+        // if (isGoogleAuthenticated) {
+        //   return done(null, false, {
+        //     message:
+        //       "You signed up using Google. To use credentials login, first log in with Google and set a password.",
+        //   });
+        // }
+
+        //method 2
+        if (isGoogleAuthenticated && !isUserExist.password) {
+          return done(
+            "You signed up using Google. To use credentials login, first log in with Google and set a password."
+          );
+        }
+
+        // Compare entered password with hashed password
+        const isPasswordMatched = await bcryptjs.compare(
+          password,
+          isUserExist.password as string
+        );
+
+        if (!isPasswordMatched) {
+          return done(null, false, { message: "Password Doesn't Match" });
+        }
+
+        // All good, return the user
+        return done(null, isUserExist);
+      } catch (error) {
+        console.log(error);
+        done(error);
+      }
+    }
+  )
+);
 
 // Configure the Google OAuth strategy for Passport
 passport.use(
@@ -63,7 +127,6 @@ passport.use(
 // Bridge == Google -> user db store -> token
 //Custom -> email , password, role : USER, name... -> registration -> DB -> 1 User create
 //Google -> req -> google -> successful : Jwt Token : Role , email -> DB - Store -> token - api access
-
 
 // Tells Passport what data to save in the session (user._id in this case)
 passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {

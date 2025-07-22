@@ -10,60 +10,60 @@ import {
 import { JwtPayload } from "jsonwebtoken";
 import { envVariables } from "../../config/env";
 
-const credentialsLogin = async (payload: Partial<IUser>) => {
-  const { email, password } = payload;
+// const credentialsLogin = async (payload: Partial<IUser>) => {
+//   const { email, password } = payload;
 
-  const isUserExist = await User.findOne({ email });
+//   const isUserExist = await User.findOne({ email });
 
-  if (!isUserExist) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist");
-  }
+//   if (!isUserExist) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist");
+//   }
 
-  const isPasswordMatched = await bcryptjs.compare(
-    password as string,
-    isUserExist.password as string
-  );
+//   const isPasswordMatched = await bcryptjs.compare(
+//     password as string,
+//     isUserExist.password as string
+//   );
 
-  if (!isPasswordMatched) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password");
-  }
+//   if (!isPasswordMatched) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password");
+//   }
 
-  //jwt payload
-  // const jwtPayload = {
-  //   userId: isUserExist._id,
-  //   email: isUserExist.email,
-  //   role: isUserExist.role,
-  // };
+//   //jwt payload
+//   // const jwtPayload = {
+//   //   userId: isUserExist._id,
+//   //   email: isUserExist.email,
+//   //   role: isUserExist.role,
+//   // };
 
-  // // const accessToken = jwt.sign(jwtPayload, "secret", {
-  // //   expiresIn: "1h",
-  // // });
-  // const accessToken = generateToken(
-  //   jwtPayload,
-  //   envVariables.JWT_ACCESS_SECRET,
-  //   envVariables.JWT_ACCESS_EXPIRES
-  // );
+//   // // const accessToken = jwt.sign(jwtPayload, "secret", {
+//   // //   expiresIn: "1h",
+//   // // });
+//   // const accessToken = generateToken(
+//   //   jwtPayload,
+//   //   envVariables.JWT_ACCESS_SECRET,
+//   //   envVariables.JWT_ACCESS_EXPIRES
+//   // );
 
-  // const refreshToken = generateToken(
-  //   jwtPayload,
-  //   envVariables.JWT_REFRESH_SECRET,
-  //   envVariables.JWT_REFRESH_EXPIRES
-  // );
+//   // const refreshToken = generateToken(
+//   //   jwtPayload,
+//   //   envVariables.JWT_REFRESH_SECRET,
+//   //   envVariables.JWT_REFRESH_EXPIRES
+//   // );
 
-  //we are using utils function insted of upper jwt payload
-  const userToken = createUserToken(isUserExist);
+//   //we are using utils function insted of upper jwt payload
+//   const userToken = createUserToken(isUserExist);
 
-  //prevent password field to show the frontend
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password: _password, ...rest } = isUserExist.toObject();
+//   //prevent password field to show the frontend
+//   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//   const { password: _password, ...rest } = isUserExist.toObject();
 
-  return {
-    // email: isUserExist.email,
-    accessToken: userToken.accessToken,
-    refreshToken: userToken.refreshToken,
-    user: rest,
-  };
-};
+//   return {
+//     // email: isUserExist.email,
+//     accessToken: userToken.accessToken,
+//     refreshToken: userToken.refreshToken,
+//     user: rest,
+//   };
+// };
 const getNewAccessToken = async (refreshToken: string) => {
   const accessToken = await createNewAccessTokenWithRefreshToken(refreshToken);
 
@@ -104,7 +104,7 @@ const newPassword = async (
 //user - login - token (email, role, _id) - booking / payment / booking / payment cancel - token
 
 export const AuthServices = {
-  credentialsLogin,
+  // credentialsLogin,
   getNewAccessToken,
   newPassword,
 };
